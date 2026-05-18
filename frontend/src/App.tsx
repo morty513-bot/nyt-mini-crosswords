@@ -4,7 +4,7 @@ import type { GenerateResponse } from './types';
 import './App.css';
 
 const DEFAULT_REQUEST = {
-  seed: '17',
+  seed: '48',
   time_budget_ms: 1000,
   candidate_limit: 64,
   max_search_nodes: 10_000,

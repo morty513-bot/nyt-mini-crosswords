@@ -1,25 +1,26 @@
 from __future__ import annotations
 
-import urllib.request
 from pathlib import Path
 
-SOURCE_URL = "https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt"
 OUTPUT = Path(__file__).resolve().parents[1] / "src" / "nyt_mini_crosswords" / "data" / "words.tsv"
+
+from wordfreq import top_n_list, zipf_frequency
+
+from nyt_mini_crosswords.wordlist_filters import is_allowed_word, normalize_word
 
 
 def main() -> None:
-    raw = urllib.request.urlopen(SOURCE_URL, timeout=30).read().decode("utf-8")
     seen: set[str] = set()
     rows: list[str] = []
     rank = 1
-    for line in raw.splitlines():
-        word = line.strip().lower()
-        if not word.isalpha() or len(word) > 5 or len(word) < 3:
+    for word in top_n_list("en", 20000):
+        normalized = normalize_word(word)
+        if not is_allowed_word(normalized, zipf_frequency(normalized, "en")):
             continue
-        if word in seen:
+        if normalized in seen:
             continue
-        seen.add(word)
-        rows.append(f"{word}\t{rank}")
+        seen.add(normalized)
+        rows.append(f"{normalized}\t{rank}")
         rank += 1
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text("\n".join(rows) + "\n", encoding="utf-8")
