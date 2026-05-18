@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from typing import Iterable
 
+from .generator import GenerationOptions
 from .sweep import SweepRecord, seed_series, summarize, sweep_seeds
 
 
@@ -46,6 +47,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--time-budget-ms", type=int, default=1000, help="Per-seed time budget.")
     parser.add_argument("--candidate-limit", type=int, default=64, help="Per-slot candidate cap.")
     parser.add_argument("--max-search-nodes", type=int, default=20_000, help="Per-seed search node limit.")
+    parser.add_argument("--candidate-cache", action="store_true", help="Enable the candidate lookup cache.")
+    parser.add_argument("--slot-impact-tiebreak", action="store_true", help="Enable the slot-impact tie-break heuristic.")
+    parser.add_argument("--template-scoring", action="store_true", help="Enable template geometry scoring.")
     return parser.parse_args()
 
 
@@ -55,6 +59,7 @@ def run_report(
     time_budget_ms: int,
     candidate_limit: int,
     max_search_nodes: int,
+    options: GenerationOptions | None = None,
     label: str | None = None,
 ) -> list[str]:
     records = sweep_seeds(
@@ -62,6 +67,7 @@ def run_report(
         time_budget_ms=time_budget_ms,
         candidate_limit=candidate_limit,
         max_search_nodes=max_search_nodes,
+        options=options,
     )
     return build_report(records, label=label)
 
@@ -69,11 +75,17 @@ def run_report(
 def main() -> None:
     args = parse_args()
     seeds = seed_series(args.start_seed, args.count, args.step)
+    options = GenerationOptions(
+        candidate_cache=args.candidate_cache,
+        slot_impact_tiebreak=args.slot_impact_tiebreak,
+        template_scoring=args.template_scoring,
+    )
     for line in run_report(
         seeds,
         time_budget_ms=args.time_budget_ms,
         candidate_limit=args.candidate_limit,
         max_search_nodes=args.max_search_nodes,
+        options=options,
         label=args.label,
     ):
         print(line)

@@ -5,12 +5,28 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class OptimizationConfig(BaseModel):
+    candidate_cache: bool = Field(
+        default=False,
+        description="Reuse cached candidate lists for the same length and pattern.",
+    )
+    slot_impact_tiebreak: bool = Field(
+        default=False,
+        description="Break MRV ties by preferring the slot that constrains the board most.",
+    )
+    template_scoring: bool = Field(
+        default=False,
+        description="Prefer templates with more constrained geometry before random tie-breaking.",
+    )
+
+
 class GenerateRequest(BaseModel):
     seed: int | str | None = Field(default=None, description="Deterministic seed for the run")
     time_budget_ms: int = Field(default=350, ge=25, le=10_000)
     candidate_limit: int = Field(default=48, ge=4, le=256)
     max_search_nodes: int = Field(default=4_000, ge=25, le=100_000)
     template_id: str | None = Field(default=None, description="Optional exact template id")
+    optimizations: OptimizationConfig = Field(default_factory=OptimizationConfig)
 
 
 class SlotAnswer(BaseModel):

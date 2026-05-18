@@ -7,6 +7,7 @@ from statistics import mean, median
 from typing import Iterable
 
 from .app import GENERATOR
+from .generator import GenerationOptions
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +27,7 @@ def sweep_seeds(
     time_budget_ms: int,
     candidate_limit: int,
     max_search_nodes: int,
+    options: GenerationOptions | None = None,
     generator=GENERATOR,
 ) -> list[SweepRecord]:
     records: list[SweepRecord] = []
@@ -35,6 +37,7 @@ def sweep_seeds(
             time_budget_ms=time_budget_ms,
             candidate_limit=candidate_limit,
             max_search_nodes=max_search_nodes,
+            options=options,
         )
         records.append(
             SweepRecord(
@@ -98,6 +101,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--time-budget-ms", type=int, default=1000, help="Per-seed time budget.")
     parser.add_argument("--candidate-limit", type=int, default=64, help="Per-slot candidate cap.")
     parser.add_argument("--max-search-nodes", type=int, default=20_000, help="Per-seed search node limit.")
+    parser.add_argument("--candidate-cache", action="store_true", help="Enable the candidate lookup cache.")
+    parser.add_argument("--slot-impact-tiebreak", action="store_true", help="Enable the slot-impact tie-break heuristic.")
+    parser.add_argument("--template-scoring", action="store_true", help="Enable template geometry scoring.")
     parser.add_argument("--json", action="store_true", help="Print JSON instead of human-readable text.")
     return parser.parse_args()
 
@@ -105,11 +111,17 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     seeds = seed_series(args.start_seed, args.count, args.step)
+    options = GenerationOptions(
+        candidate_cache=args.candidate_cache,
+        slot_impact_tiebreak=args.slot_impact_tiebreak,
+        template_scoring=args.template_scoring,
+    )
     records = sweep_seeds(
         seeds,
         time_budget_ms=args.time_budget_ms,
         candidate_limit=args.candidate_limit,
         max_search_nodes=args.max_search_nodes,
+        options=options,
     )
     summary = summarize(records)
 

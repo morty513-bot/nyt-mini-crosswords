@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from nyt_mini_crosswords.generator import GenerationOptions
 from nyt_mini_crosswords import sweep
 from nyt_mini_crosswords import report
 
@@ -26,6 +27,35 @@ def test_summarize_counts_successes_and_timeouts() -> None:
 
 def test_seed_series_is_sequential_with_step() -> None:
     assert sweep.seed_series(10, 4, 3) == [10, 13, 16, 19]
+
+
+def test_sweep_seeds_forwards_generation_options() -> None:
+    class RecordingGenerator:
+        def __init__(self) -> None:
+            self.options = []
+
+        def generate(self, **kwargs):  # type: ignore[no-untyped-def]
+            self.options.append(kwargs["options"])
+
+            class Outcome:
+                status = "timeout"
+
+                class stats:
+                    elapsed_ms = 0
+                    search_nodes = 0
+
+                answers = []
+                template = None
+                message = None
+
+            return Outcome()
+
+    generator = RecordingGenerator()
+    options = GenerationOptions(candidate_cache=False, slot_impact_tiebreak=True, template_scoring=False)
+
+    sweep.sweep_seeds([1, 2], time_budget_ms=100, candidate_limit=8, max_search_nodes=10, options=options, generator=generator)
+
+    assert generator.options == [options, options]
 
 
 def test_build_report_includes_key_metrics() -> None:

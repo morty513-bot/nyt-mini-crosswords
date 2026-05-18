@@ -39,6 +39,22 @@ cd backend
 pytest
 ```
 
+## Benchmarking
+
+The solver exposes three toggleable optimizations:
+- `--candidate-cache`
+- `--slot-impact-tiebreak`
+- `--template-scoring`
+
+Examples:
+
+```bash
+cd backend
+python scripts/generate_report.py --label baseline --start-seed 1 --count 20
+python scripts/generate_report.py --label template-scoring --template-scoring --start-seed 1 --count 20
+python scripts/compare_optimizations.py --start-seed 1 --count 20
+```
+
 ## Deployment notes
 - The frontend build is intended for `/nyt-mini-crosswords/`.
 - The backend API is intended to live at `/nyt-mini-crosswords/api/*`.
