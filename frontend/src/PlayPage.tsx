@@ -6,8 +6,11 @@ import {
   getCellNumberMap,
   getCellSolutionMap,
   getClueLists,
+  getNextPlayableCellIndex,
   getPuzzleSlotByCell,
   getSlotCells,
+  isPuzzleComplete,
+  isPuzzleSolved,
   type PuzzleDirection,
   type PuzzleSlot,
 } from './puzzle';
@@ -21,17 +24,26 @@ export default function PlayPage() {
   const [selectedDirection, setSelectedDirection] = useState<PuzzleDirection>('across');
   const [clueDirection, setClueDirection] = useState<PuzzleDirection>('across');
   const [showSolution, setShowSolution] = useState(false);
+  const [completionModal, setCompletionModal] = useState<{ signature: string; solved: boolean } | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const dismissedCompletionSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!showSolution) {
+    if (completionModal) {
+      inputRef.current?.blur();
+      return;
+    }
+    if (!showSolution && !completionModal) {
       inputRef.current?.focus();
     }
-  }, [selectedCell, selectedDirection, showSolution]);
+  }, [selectedCell, selectedDirection, showSolution, completionModal]);
 
   const numberMap = getCellNumberMap(puzzle);
   const solutionMap = getCellSolutionMap(puzzle);
   const clueLists = getClueLists(puzzle);
+  const completionSignature = entries.join('');
+  const isComplete = isPuzzleComplete(puzzle, entries);
+  const isSolved = isPuzzleSolved(puzzle, entries);
   const selected = parseCellKey(selectedCell);
   const activeSlot =
     getPuzzleSlotByCell(puzzle, selected.row, selected.col, selectedDirection) ??
@@ -41,6 +53,30 @@ export default function PlayPage() {
   const selectedClueList = clueDirection === 'across' ? clueLists.across : clueLists.down;
   const totalPlayable = solutionMap.size;
   const filledCount = showSolution ? totalPlayable : entries.filter((letter) => letter.trim()).length;
+
+  useEffect(() => {
+    if (!isComplete || showSolution) {
+      if (!isComplete) {
+        dismissedCompletionSignatureRef.current = null;
+      }
+      if (completionModal) {
+        setCompletionModal(null);
+      }
+      return;
+    }
+
+    if (completionModal?.signature === completionSignature) {
+      return;
+    }
+    if (dismissedCompletionSignatureRef.current === completionSignature) {
+      return;
+    }
+
+    setCompletionModal({
+      signature: completionSignature,
+      solved: isSolved,
+    });
+  }, [completionModal, completionSignature, isComplete, isSolved, showSolution]);
 
   function focusCapture() {
     inputRef.current?.focus();
@@ -136,16 +172,26 @@ export default function PlayPage() {
 
   function handleLetter(letter: string) {
     const next = entries.slice();
-    next[indexFor(selected.row, selected.col, puzzle.size)] = letter;
+    const currentIndex = indexFor(selected.row, selected.col, puzzle.size);
+    next[currentIndex] = letter;
     setEntries(next);
 
     if (activeCells.length) {
-      const index = activeCells.indexOf(indexFor(selected.row, selected.col, puzzle.size));
+      const index = activeCells.indexOf(currentIndex);
       const nextCell = activeCells[index + 1];
       if (typeof nextCell === 'number') {
         setSelectedCell(cellKeyFromIndex(nextCell, puzzle.size));
+        focusCapture();
+        return;
       }
     }
+
+    const nextPlayable = getNextPlayableCellIndex(puzzle, currentIndex);
+    if (typeof nextPlayable === 'number') {
+      selectCell(Math.floor(nextPlayable / puzzle.size), nextPlayable % puzzle.size);
+      return;
+    }
+
     focusCapture();
   }
 
@@ -194,6 +240,12 @@ export default function PlayPage() {
 
   function revealBoard() {
     setShowSolution((value) => !value);
+    focusCapture();
+  }
+
+  function dismissCompletionModal() {
+    dismissedCompletionSignatureRef.current = completionModal?.signature ?? null;
+    setCompletionModal(null);
     focusCapture();
   }
 
@@ -371,6 +423,42 @@ export default function PlayPage() {
           </div>
         </aside>
       </section>
+
+      {completionModal ? (
+        <div
+          className="play-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="completion-title"
+          aria-describedby="completion-description"
+        >
+          <button
+            type="button"
+            className="play-modal-backdrop"
+            aria-label="Close completion dialog"
+            onClick={dismissCompletionModal}
+          />
+          <section className="play-modal-card panel">
+            <p className="eyebrow">{completionModal.solved ? 'Puzzle solved' : 'Puzzle complete'}</p>
+            <h2 id="completion-title">{completionModal.solved ? 'You got it all right.' : 'The grid is filled, but not every answer matches.'}</h2>
+            <p id="completion-description" className="play-modal-copy">
+              {completionModal.solved
+                ? 'Every entry matches the puzzle solution. Nice work.'
+                : 'You finished the board, but at least one entry is off. Keep editing or reveal the solution.'}
+            </p>
+            <div className="play-modal-actions">
+              <button type="button" className="toolbar-button" onClick={dismissCompletionModal}>
+                Keep editing
+              </button>
+              {!completionModal.solved ? (
+                <button type="button" className="toolbar-button" onClick={revealBoard}>
+                  Reveal answers
+                </button>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

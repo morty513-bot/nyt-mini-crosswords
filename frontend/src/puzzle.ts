@@ -156,6 +156,53 @@ export function getCellSolutionMap(puzzle: Puzzle): Map<string, string> {
   return map;
 }
 
+export function getPlayableCellIndexes(puzzle: Puzzle): number[] {
+  const playable: number[] = [];
+  for (let row = 0; row < puzzle.rows.length; row += 1) {
+    for (let col = 0; col < puzzle.rows[row].length; col += 1) {
+      if (puzzle.rows[row][col] !== '#') {
+        playable.push(cellIndex(row, col, puzzle.size));
+      }
+    }
+  }
+  return playable;
+}
+
+export function getNextPlayableCellIndex(puzzle: Puzzle, currentIndex: number): number | null {
+  for (let index = currentIndex + 1; index < puzzle.size * puzzle.size; index += 1) {
+    const row = Math.floor(index / puzzle.size);
+    const col = index % puzzle.size;
+    if (puzzle.rows[row][col] !== '#') {
+      return index;
+    }
+  }
+  return null;
+}
+
+export function isPuzzleComplete(puzzle: Puzzle, entries: string[]): boolean {
+  const solutionMap = getCellSolutionMap(puzzle);
+  for (const [key] of solutionMap.entries()) {
+    const [row, col] = key.split(':').map((value) => Number(value));
+    const index = cellIndex(row, col, puzzle.size);
+    if (!entries[index]?.trim()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function isPuzzleSolved(puzzle: Puzzle, entries: string[]): boolean {
+  const solutionMap = getCellSolutionMap(puzzle);
+  for (const [key, solution] of solutionMap.entries()) {
+    const [row, col] = key.split(':').map((value) => Number(value));
+    const index = cellIndex(row, col, puzzle.size);
+    if ((entries[index] ?? '').toUpperCase() !== solution.toUpperCase()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function slotFromAnswer(answer: SlotAnswer): RawPuzzleSlot {
   return {
     id: answer.slot_id,
