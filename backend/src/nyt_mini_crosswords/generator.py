@@ -10,7 +10,9 @@ from .models import GenerationStats, GenerateResponse, SlotAnswer, TemplateInfo
 
 
 class GenerationTimeout(RuntimeError):
-    pass
+    def __init__(self, reason: str):
+        super().__init__(reason)
+        self.reason = reason
 
 
 @dataclass(slots=True)
@@ -53,6 +55,7 @@ class CrosswordGenerator:
             templates = matching or templates
         templates.sort(key=lambda template: (_template_priority(template.block_count), rng.random()))
         last_state: SolverState | None = None
+        last_timeout_reason: str | None = None
         max_attempts = min(6, len(templates))
         if max_attempts <= 0:
             elapsed_ms = int((time.perf_counter() - start) * 1000)
@@ -76,10 +79,21 @@ class CrosswordGenerator:
                 if self._solve(state, rng, template_deadline, candidate_limit, template_node_slice, stats, resolved_options):
                     elapsed_ms = int((time.perf_counter() - start) * 1000)
                     return self._success_response(seed, state, stats, elapsed_ms)
-            except GenerationTimeout:
+            except GenerationTimeout as exc:
+                last_timeout_reason = exc.reason
                 continue
         elapsed_ms = int((time.perf_counter() - start) * 1000)
-        return self._timeout_response(seed, last_state, stats, elapsed_ms, message="No template could be solved within the time budget.")
+        if time.perf_counter() > deadline and last_timeout_reason is None:
+            last_timeout_reason = f"overall time budget of {time_budget_ms} ms was exhausted before another template could be tried"
+        if last_timeout_reason is None:
+            last_timeout_reason = "no template could be solved within the time budget"
+        return self._timeout_response(
+            seed,
+            last_state,
+            stats,
+            elapsed_ms,
+            message=_timeout_message(last_timeout_reason, stats, time_budget_ms),
+        )
 
     def _success_response(self, seed: int, state: SolverState, stats: "_Stats", elapsed_ms: int) -> GenerateResponse:
         answers = [
@@ -148,9 +162,13 @@ class CrosswordGenerator:
         options: GenerationOptions,
     ) -> bool:
         if time.perf_counter() > deadline:
-            raise GenerationTimeout()
+            raise GenerationTimeout(
+                f"time budget exhausted while solving template {state.template.template_id}",
+            )
         if stats.search_nodes >= max_search_nodes:
-            raise GenerationTimeout()
+            raise GenerationTimeout(
+                f"search node limit of {max_search_nodes} reached while solving template {state.template.template_id}",
+            )
         if len(state.assignments) == len(state.slots):
             return True
 
@@ -164,7 +182,13 @@ class CrosswordGenerator:
         for entry in candidates:
             stats.search_nodes += 1
             if time.perf_counter() > deadline or stats.search_nodes >= max_search_nodes:
-                raise GenerationTimeout()
+                if stats.search_nodes >= max_search_nodes:
+                    raise GenerationTimeout(
+                        f"search node limit of {max_search_nodes} reached while solving template {state.template.template_id}",
+                    )
+                raise GenerationTimeout(
+                    f"time budget exhausted while solving template {state.template.template_id}",
+                )
             if entry.word in state.used_words:
                 continue
             if not state.board.can_place(slot, entry.word):
@@ -268,3 +292,16 @@ def _template_priority(block_count: int) -> int:
     if block_count == 1:
         return 4
     return 5
+
+
+def _timeout_message(reason: str, stats: "_Stats", time_budget_ms: int) -> str:
+    details = [
+        f"Timed out because {reason}.",
+        f"templates tried: {stats.templates_tried}",
+        f"search nodes: {stats.search_nodes}",
+        f"backtracks: {stats.backtracks}",
+        f"dead ends: {stats.dead_ends}",
+        f"candidate checks: {stats.candidate_checks}",
+        f"budget: {time_budget_ms} ms",
+    ]
+    return " ".join(details[:1]) + " " + "; ".join(details[1:])

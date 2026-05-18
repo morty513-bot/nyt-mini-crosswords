@@ -142,7 +142,14 @@ export default function App() {
               </div>
             ) : null}
 
-            {result.message ? <p className="note">{result.message}</p> : null}
+            {result.status === 'timeout' && result.message ? (
+              <div className="timeout-callout" role="status" aria-live="polite">
+                <span className="timeout-label">Timeout reason</span>
+                <p>{result.message}</p>
+              </div>
+            ) : result.message ? (
+              <p className="note">{result.message}</p>
+            ) : null}
           </article>
 
           <article className="panel stats-panel">

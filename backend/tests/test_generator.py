@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from nyt_mini_crosswords.app import GENERATOR, LEXICON, TEMPLATES
+from nyt_mini_crosswords.generator import _Stats, _timeout_message
 from nyt_mini_crosswords.lexicon import Lexicon
 from nyt_mini_crosswords.templates import build_templates
 from nyt_mini_crosswords.wordlist_filters import REJECTED_WORDS, is_allowed_word
@@ -34,6 +35,24 @@ def test_generation_produces_only_known_words() -> None:
 def test_generation_reports_timeout_for_tiny_budget() -> None:
     outcome = GENERATOR.generate(seed=3, time_budget_ms=0, candidate_limit=8, max_search_nodes=1)
     assert outcome.status == "timeout"
+    assert outcome.message is not None
+    assert outcome.message.startswith("Timed out because ")
+    assert "time budget" in outcome.message or "node limit" in outcome.message
+
+
+def test_timeout_message_includes_reason_and_stats() -> None:
+    message = _timeout_message(
+        "search node limit of 10 reached while solving template demo",
+        _Stats(templates_tried=2, search_nodes=10, backtracks=3, dead_ends=1, candidate_checks=4),
+        1000,
+    )
+    assert message.startswith("Timed out because search node limit of 10 reached while solving template demo.")
+    assert "templates tried: 2" in message
+    assert "search nodes: 10" in message
+    assert "backtracks: 3" in message
+    assert "dead ends: 1" in message
+    assert "candidate checks: 4" in message
+    assert "budget: 1000 ms" in message
 
 
 def test_generation_succeeds_for_known_seed() -> None:

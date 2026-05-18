@@ -188,6 +188,31 @@ body {
   line-height: 1.45;
 }
 
+.timeout-callout {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(184, 75, 24, 0.24);
+  background: rgba(255, 247, 241, 0.95);
+}
+
+.timeout-label {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b84b18;
+}
+
+.timeout-callout p {
+  margin: 0;
+  color: rgba(29, 27, 23, 0.84);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
 .stats-list {
   display: grid;
   gap: 12px;
