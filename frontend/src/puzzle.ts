@@ -168,17 +168,6 @@ export function getPlayableCellIndexes(puzzle: Puzzle): number[] {
   return playable;
 }
 
-export function getNextPlayableCellIndex(puzzle: Puzzle, currentIndex: number): number | null {
-  for (let index = currentIndex + 1; index < puzzle.size * puzzle.size; index += 1) {
-    const row = Math.floor(index / puzzle.size);
-    const col = index % puzzle.size;
-    if (puzzle.rows[row][col] !== '#') {
-      return index;
-    }
-  }
-  return null;
-}
-
 export function getNextEmptyPlayableCellIndex(
   puzzle: Puzzle,
   entries: string[],
@@ -194,6 +183,18 @@ export function getNextEmptyPlayableCellIndex(
       return index;
     }
   }
+
+  for (let index = 0; index <= currentIndex; index += 1) {
+    const row = Math.floor(index / puzzle.size);
+    const col = index % puzzle.size;
+    if (puzzle.rows[row][col] === '#') {
+      continue;
+    }
+    if (!entries[index]?.trim()) {
+      return index;
+    }
+  }
+
   return null;
 }
 
