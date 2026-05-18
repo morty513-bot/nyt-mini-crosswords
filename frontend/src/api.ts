@@ -12,7 +12,19 @@ export async function generatePuzzle(request: GenerateRequest): Promise<Generate
   });
 
   if (!response.ok) {
-    throw new Error('Generator request failed with status ' + response.status);
+    let detail = '';
+    try {
+      const payload = (await response.json()) as { detail?: unknown };
+      if (typeof payload.detail === 'string' && payload.detail.trim()) {
+        detail = ': ' + payload.detail;
+      }
+    } catch {
+      const text = await response.text().catch(() => '');
+      if (text.trim()) {
+        detail = ': ' + text.trim();
+      }
+    }
+    throw new Error('Generator request failed with status ' + response.status + detail);
   }
 
   return response.json() as Promise<GenerateResponse>;

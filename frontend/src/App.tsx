@@ -58,6 +58,18 @@ export default function App() {
 
   return (
     <main className="shell">
+      {error ? (
+        <section className="panel error-panel error-banner" role="alert" aria-live="assertive">
+          <div>
+            <h2>Generation failed</h2>
+            <p>{error}</p>
+          </div>
+          <button type="button" onClick={handleGenerate} disabled={loading}>
+            Try again
+          </button>
+        </section>
+      ) : null}
+
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">MVP / generator-first</p>
@@ -108,13 +120,6 @@ export default function App() {
           </button>
         </div>
       </section>
-
-      {error ? (
-        <section className="panel error-panel">
-          <h2>Request failed</h2>
-          <p>{error}</p>
-        </section>
-      ) : null}
 
       {result ? (
         <section className="result-grid">
