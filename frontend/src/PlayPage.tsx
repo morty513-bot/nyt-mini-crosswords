@@ -46,9 +46,7 @@ export default function PlayPage() {
   const isComplete = isPuzzleComplete(puzzle, entries);
   const isSolved = isPuzzleSolved(puzzle, entries);
   const selected = parseCellKey(selectedCell);
-  const activeSlot =
-    getPuzzleSlotByCell(puzzle, selected.row, selected.col, selectedDirection) ??
-    getPuzzleSlotByCell(puzzle, selected.row, selected.col);
+  const activeSlot = getPuzzleSlotByCell(puzzle, selected.row, selected.col, selectedDirection);
   const activeCells = activeSlot ? getSlotCells(activeSlot, puzzle.size) : [];
   const activeCellsSet = new Set(activeCells);
   const selectedClueList = clueDirection === 'across' ? clueLists.across : clueLists.down;
