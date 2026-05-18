@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import random
 import time
 from dataclasses import dataclass
@@ -25,17 +24,7 @@ class SolverState:
 
 @dataclass(frozen=True, slots=True)
 class GenerationOptions:
-    candidate_cache: bool = False
-    slot_impact_tiebreak: bool = False
-    template_scoring: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class TemplateProfile:
-    template: Template
-    slots: tuple[Slot, ...]
-    slot_count: int
-    intersection_count: int
+    candidate_cache: bool = True
 
 
 class CrosswordGenerator:
@@ -43,7 +32,6 @@ class CrosswordGenerator:
         self.lexicon = lexicon
         self.templates = templates
         self.options = options or GenerationOptions()
-        self._template_profiles = [self._build_template_profile(template) for template in templates]
 
     def generate(
         self,
@@ -59,21 +47,11 @@ class CrosswordGenerator:
         rng = random.Random(seed)
         stats = _Stats()
         resolved_options = options or self.options
-        templates = list(self._template_profiles)
+        templates = list(self.templates)
         if template_id is not None:
-            matching = [profile for profile in templates if profile.template.template_id == template_id]
+            matching = [template for template in templates if template.template_id == template_id]
             templates = matching or templates
-        if resolved_options.template_scoring:
-            templates.sort(
-                key=lambda profile: (
-                    _template_priority(profile.template.block_count),
-                    profile.slot_count,
-                    -profile.intersection_count,
-                    rng.random(),
-                ),
-            )
-        else:
-            templates.sort(key=lambda profile: (_template_priority(profile.template.block_count), rng.random()))
+        templates.sort(key=lambda template: (_template_priority(template.block_count), rng.random()))
         last_state: SolverState | None = None
         max_attempts = min(6, len(templates))
         if max_attempts <= 0:
@@ -81,14 +59,14 @@ class CrosswordGenerator:
             return self._timeout_response(seed, None, stats, elapsed_ms, message="No crossword templates were available.")
         template_time_slice_ms = max(50, time_budget_ms // max_attempts)
         template_node_slice = max(250, max_search_nodes // max_attempts)
-        for profile in templates[:max_attempts]:
+        for template in templates[:max_attempts]:
             if time.perf_counter() > deadline:
                 break
             stats.templates_tried += 1
             state = SolverState(
-                template=profile.template,
-                slots=list(profile.slots),
-                board=CrosswordState(profile.template),
+                template=template,
+                slots=extract_slots(template),
+                board=CrosswordState(template),
                 assignments={},
                 used_words=set(),
             )
@@ -194,7 +172,7 @@ class CrosswordGenerator:
             changes = state.board.place(slot, entry.word)
             state.assignments[slot.slot_id] = entry.word
             state.used_words.add(entry.word)
-            if self._forward_check(state, rng, candidate_limit, stats, options):
+            if self._forward_check(state, candidate_limit, stats, options):
                 if self._solve(state, rng, deadline, candidate_limit, max_search_nodes, stats, options):
                     return True
             stats.backtracks += 1
@@ -214,13 +192,9 @@ class CrosswordGenerator:
     ) -> tuple[Slot | None, list[WordEntry]]:
         best_slot: Slot | None = None
         best_candidates: list[WordEntry] = []
-        best_score: tuple[float, float, float] = (math.inf, math.inf, math.inf)
+        best_score = float("inf")
         remaining = [slot for slot in state.slots if slot.slot_id not in state.assignments]
-        slot_impact: dict[str, int] = {}
-        if options.slot_impact_tiebreak:
-            slot_impact = self._slot_impact_scores(remaining)
-        else:
-            rng.shuffle(remaining)
+        rng.shuffle(remaining)
         for slot in remaining:
             pattern = state.board.pattern_for_slot(slot)
             candidates = self.lexicon.candidates(
@@ -233,13 +207,12 @@ class CrosswordGenerator:
             stats.candidate_checks += 1
             if not candidates:
                 return slot, []
-            impact_score = float(slot_impact.get(slot.slot_id, 0)) if options.slot_impact_tiebreak else 0.0
-            score = (float(len(candidates)), -impact_score, rng.random())
+            score = float(len(candidates))
             if score < best_score:
                 best_slot = slot
                 best_candidates = candidates
                 best_score = score
-                if not options.slot_impact_tiebreak and len(candidates) == 1:
+                if score == 1:
                     break
         if best_slot is None:
             return None, []
@@ -253,7 +226,6 @@ class CrosswordGenerator:
     def _forward_check(
         self,
         state: SolverState,
-        rng: random.Random,
         candidate_limit: int,
         stats: "_Stats",
         options: GenerationOptions,
@@ -273,35 +245,6 @@ class CrosswordGenerator:
             if not candidates:
                 return False
         return True
-
-    def _slot_impact_scores(self, remaining: list[Slot]) -> dict[str, int]:
-        cell_to_slots: dict[tuple[int, int], set[str]] = {}
-        for slot in remaining:
-            for cell in slot.cells:
-                cell_to_slots.setdefault(cell, set()).add(slot.slot_id)
-        scores: dict[str, int] = {}
-        for slot in remaining:
-            impacted: set[str] = set()
-            for cell in slot.cells:
-                for other in cell_to_slots.get(cell, set()):
-                    if other != slot.slot_id:
-                        impacted.add(other)
-            scores[slot.slot_id] = len(impacted)
-        return scores
-
-    def _build_template_profile(self, template: Template) -> TemplateProfile:
-        slots = tuple(extract_slots(template))
-        intersections: dict[tuple[int, int], int] = {}
-        for slot in slots:
-            for cell in slot.cells:
-                intersections[cell] = intersections.get(cell, 0) + 1
-        intersection_count = sum(1 for count in intersections.values() if count > 1)
-        return TemplateProfile(
-            template=template,
-            slots=slots,
-            slot_count=len(slots),
-            intersection_count=intersection_count,
-        )
 
 
 @dataclass(slots=True)

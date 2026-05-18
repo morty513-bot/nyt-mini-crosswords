@@ -82,9 +82,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--time-budget-ms", type=int, default=1000, help="Per-seed time budget.")
     parser.add_argument("--candidate-limit", type=int, default=64, help="Per-slot candidate cap.")
     parser.add_argument("--max-search-nodes", type=int, default=20_000, help="Per-seed search node limit.")
-    parser.add_argument("--candidate-cache", action="store_true", help="Enable the candidate lookup cache.")
-    parser.add_argument("--slot-impact-tiebreak", action="store_true", help="Enable the slot-impact tie-break heuristic.")
-    parser.add_argument("--template-scoring", action="store_true", help="Enable template geometry scoring.")
+    parser.add_argument("--candidate-cache", dest="candidate_cache", action="store_true", default=True, help="Enable the candidate lookup cache.")
+    parser.add_argument("--no-candidate-cache", dest="candidate_cache", action="store_false", help="Disable the candidate lookup cache.")
     return parser.parse_args()
 
 
@@ -112,8 +111,6 @@ def main() -> None:
     seeds = seed_series(args.start_seed, args.count, args.step)
     options = GenerationOptions(
         candidate_cache=args.candidate_cache,
-        slot_impact_tiebreak=args.slot_impact_tiebreak,
-        template_scoring=args.template_scoring,
     )
     for line in run_report(
         seeds,

@@ -41,17 +41,14 @@ pytest
 
 ## Benchmarking
 
-The solver exposes three toggleable optimizations:
-- `--candidate-cache`
-- `--slot-impact-tiebreak`
-- `--template-scoring`
+The solver keeps candidate caching on by default. You can compare it against the uncached baseline with:
 
 Examples:
 
 ```bash
 cd backend
-python scripts/generate_report.py --label baseline --start-seed 1 --count 20
-python scripts/generate_report.py --label template-scoring --template-scoring --start-seed 1 --count 20
+python scripts/generate_report.py --label baseline --no-candidate-cache --start-seed 1 --count 20
+python scripts/generate_report.py --label cached --candidate-cache --start-seed 1 --count 20
 python scripts/compare_optimizations.py --start-seed 1 --count 20
 ```
 

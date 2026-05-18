@@ -35,14 +35,13 @@ def generate(request: GenerateRequest) -> GenerateResponse:
     seed = _seed_value(request.seed)
     if not TEMPLATES:
         raise HTTPException(status_code=500, detail="No crossword templates are available.")
-    options = GenerationOptions(**request.optimizations.model_dump())
     return GENERATOR.generate(
         seed=seed,
         time_budget_ms=request.time_budget_ms,
         candidate_limit=request.candidate_limit,
         max_search_nodes=request.max_search_nodes,
         template_id=request.template_id,
-        options=options,
+        options=GenerationOptions(candidate_cache=request.candidate_cache),
     )
 
 

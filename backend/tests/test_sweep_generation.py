@@ -51,7 +51,7 @@ def test_sweep_seeds_forwards_generation_options() -> None:
             return Outcome()
 
     generator = RecordingGenerator()
-    options = GenerationOptions(candidate_cache=False, slot_impact_tiebreak=True, template_scoring=False)
+    options = GenerationOptions(candidate_cache=False)
 
     sweep.sweep_seeds([1, 2], time_budget_ms=100, candidate_limit=8, max_search_nodes=10, options=options, generator=generator)
 
