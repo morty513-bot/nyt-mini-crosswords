@@ -179,24 +179,21 @@ export default function PlayPage() {
     setEntries(next);
 
     if (activeSlot) {
-      const currentSlotFirstEmpty = getFirstEmptyCellIndexInSlot(activeSlot, next, puzzle.size);
-      if (currentSlotFirstEmpty === null) {
-        const nextSlot = getNextSlotWithEmptyCell(puzzle, selectedDirection, activeSlot, next);
-        const nextSlotCell = nextSlot ? getFirstEmptyCellIndexInSlot(nextSlot, next, puzzle.size) : null;
-        if (typeof nextSlotCell === 'number') {
-          setSelectedCell(cellKeyFromIndex(nextSlotCell, puzzle.size));
-          setSelectedDirection(nextSlot.direction);
-          setClueDirection(nextSlot.direction);
-          focusCapture();
-          return;
-        }
-      } else {
-        const nextActiveCell = getNextEmptyCellInList(activeCells, next, currentIndex);
-        if (typeof nextActiveCell === 'number') {
-          setSelectedCell(cellKeyFromIndex(nextActiveCell, puzzle.size));
-          focusCapture();
-          return;
-        }
+      const nextActiveCell = getNextEmptyCellInList(activeCells, next, currentIndex);
+      if (typeof nextActiveCell === 'number') {
+        setSelectedCell(cellKeyFromIndex(nextActiveCell, puzzle.size));
+        focusCapture();
+        return;
+      }
+
+      const nextSlot = getNextSlotWithEmptyCell(puzzle, selectedDirection, activeSlot, next);
+      const nextSlotCell = nextSlot ? getFirstEmptyCellIndexInSlot(nextSlot, next, puzzle.size) : null;
+      if (typeof nextSlotCell === 'number') {
+        setSelectedCell(cellKeyFromIndex(nextSlotCell, puzzle.size));
+        setSelectedDirection(nextSlot.direction);
+        setClueDirection(nextSlot.direction);
+        focusCapture();
+        return;
       }
     }
 
