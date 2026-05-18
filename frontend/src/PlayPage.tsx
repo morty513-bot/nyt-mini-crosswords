@@ -6,7 +6,7 @@ import {
   getCellNumberMap,
   getCellSolutionMap,
   getClueLists,
-  getNextPlayableCellIndex,
+  getNextEmptyPlayableCellIndex,
   getPuzzleSlotByCell,
   getSlotCells,
   isPuzzleComplete,
@@ -176,17 +176,14 @@ export default function PlayPage() {
     next[currentIndex] = letter;
     setEntries(next);
 
-    if (activeCells.length) {
-      const index = activeCells.indexOf(currentIndex);
-      const nextCell = activeCells[index + 1];
-      if (typeof nextCell === 'number') {
-        setSelectedCell(cellKeyFromIndex(nextCell, puzzle.size));
-        focusCapture();
-        return;
-      }
+    const nextActiveCell = getNextEmptyCellInList(activeCells, next, currentIndex);
+    if (typeof nextActiveCell === 'number') {
+      setSelectedCell(cellKeyFromIndex(nextActiveCell, puzzle.size));
+      focusCapture();
+      return;
     }
 
-    const nextPlayable = getNextPlayableCellIndex(puzzle, currentIndex);
+    const nextPlayable = getNextEmptyPlayableCellIndex(puzzle, next, currentIndex);
     if (typeof nextPlayable === 'number') {
       selectCell(Math.floor(nextPlayable / puzzle.size), nextPlayable % puzzle.size);
       return;
@@ -486,4 +483,24 @@ function cellKeyFromIndex(index: number, size: number) {
 
 function indexFor(row: number, col: number, size: number) {
   return row * size + col;
+}
+
+function getNextEmptyCellInList(cells: number[], entries: string[], currentIndex: number) {
+  if (!cells.length) {
+    return null;
+  }
+
+  const start = cells.indexOf(currentIndex);
+  if (start < 0) {
+    return null;
+  }
+
+  for (let index = start + 1; index < cells.length; index += 1) {
+    const cellIndex = cells[index];
+    if (!entries[cellIndex]?.trim()) {
+      return cellIndex;
+    }
+  }
+
+  return null;
 }

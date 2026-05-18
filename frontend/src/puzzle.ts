@@ -179,6 +179,24 @@ export function getNextPlayableCellIndex(puzzle: Puzzle, currentIndex: number): 
   return null;
 }
 
+export function getNextEmptyPlayableCellIndex(
+  puzzle: Puzzle,
+  entries: string[],
+  currentIndex: number,
+): number | null {
+  for (let index = currentIndex + 1; index < puzzle.size * puzzle.size; index += 1) {
+    const row = Math.floor(index / puzzle.size);
+    const col = index % puzzle.size;
+    if (puzzle.rows[row][col] === '#') {
+      continue;
+    }
+    if (!entries[index]?.trim()) {
+      return index;
+    }
+  }
+  return null;
+}
+
 export function isPuzzleComplete(puzzle: Puzzle, entries: string[]): boolean {
   const solutionMap = getCellSolutionMap(puzzle);
   for (const [key] of solutionMap.entries()) {
