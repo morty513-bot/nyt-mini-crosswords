@@ -74,3 +74,31 @@ def test_build_report_includes_key_metrics() -> None:
     assert "Timeouts: 1 (33.3%)" in text
     assert "Unique templates used: 1" in text
     assert "Top successful templates:" in text
+
+
+def test_build_comparison_report_shows_paired_deltas() -> None:
+    baseline = [
+        sweep.SweepRecord(1, "timeout", 1000, 0, None, "timed out", 4000),
+        sweep.SweepRecord(2, "ok", 250, 10, "template-a", None, 2100),
+    ]
+    candidate = [
+        sweep.SweepRecord(1, "ok", 420, 10, "template-b", None, 1800),
+        sweep.SweepRecord(2, "timeout", 1000, 0, None, "timed out", 4000),
+    ]
+
+    text = "\n".join(
+        report.build_comparison_report(
+            baseline,
+            candidate,
+            baseline_label="baseline",
+            candidate_label="candidate",
+        ),
+    )
+
+    assert "Comparison: candidate vs baseline" in text
+    assert "Seeds compared: 2" in text
+    assert "Success delta: +0" in text
+    assert "Improved seeds: 1" in text
+    assert "Regressed seeds: 1" in text
+    assert "Seeds improved by candidate" in text
+    assert "Seeds regressed from baseline" in text

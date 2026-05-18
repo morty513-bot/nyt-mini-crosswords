@@ -4,7 +4,7 @@ import argparse
 from typing import Iterable
 
 from .generator import GenerationOptions
-from .sweep import SweepRecord, seed_series, summarize, sweep_seeds
+from .sweep import SweepRecord, align_records, seed_series, summarize, summarize_comparison, sweep_seeds
 
 
 def build_report(records: list[SweepRecord], *, label: str | None = None) -> list[str]:
@@ -35,6 +35,41 @@ def build_report(records: list[SweepRecord], *, label: str | None = None) -> lis
         lines.append("Timeout seeds (first 25): " + ", ".join(str(seed) for seed in summary["timeout_seeds"]))
     if summary["failure_seeds"]:
         lines.append("Other failure seeds (first 25): " + ", ".join(str(seed) for seed in summary["failure_seeds"]))
+    return lines
+
+
+def build_comparison_report(
+    baseline: list[SweepRecord],
+    candidate: list[SweepRecord],
+    *,
+    baseline_label: str = "baseline",
+    candidate_label: str = "candidate",
+) -> list[str]:
+    pairs = align_records(baseline, candidate)
+    summary = summarize_comparison(pairs)
+    lines: list[str] = []
+    lines.append(f"Comparison: {candidate_label} vs {baseline_label}")
+    lines.append(f"Seeds compared: {summary['seeds_compared']}")
+    lines.append(f"{baseline_label} successes: {summary['baseline_successes']} ({(summary['baseline_successes'] / summary['seeds_compared'] if summary['seeds_compared'] else 0.0):.1%})")
+    lines.append(f"{candidate_label} successes: {summary['candidate_successes']} ({(summary['candidate_successes'] / summary['seeds_compared'] if summary['seeds_compared'] else 0.0):.1%})")
+    lines.append(f"Success delta: {summary['success_delta']:+d}")
+    lines.append(f"Improved seeds: {summary['improved']}")
+    lines.append(f"Regressed seeds: {summary['regressed']}")
+    lines.append(f"Shared successes: {summary['shared_successes']}")
+    lines.append(f"Shared timeouts: {summary['shared_timeouts']}")
+    if summary["elapsed_delta_mean_ms"] is not None:
+        lines.append(f"Mean elapsed delta on shared successes: {summary['elapsed_delta_mean_ms']:+.1f} ms")
+    if summary["elapsed_delta_median_ms"] is not None:
+        lines.append(f"Median elapsed delta on shared successes: {summary['elapsed_delta_median_ms']:+.1f} ms")
+    if summary["search_node_delta_mean"] is not None:
+        lines.append(f"Mean search-node delta on shared successes: {summary['search_node_delta_mean']:+.1f}")
+    if summary["search_node_delta_median"] is not None:
+        lines.append(f"Median search-node delta on shared successes: {summary['search_node_delta_median']:+.1f}")
+    lines.append(f"Exact match rate on shared successes: {summary['exact_match_rate']:.1%}")
+    if summary["candidate_only_seeds"]:
+        lines.append(f"Seeds improved by {candidate_label} (first 25): " + ", ".join(str(seed) for seed in summary["candidate_only_seeds"]))
+    if summary["baseline_only_seeds"]:
+        lines.append(f"Seeds regressed from {baseline_label} (first 25): " + ", ".join(str(seed) for seed in summary["baseline_only_seeds"]))
     return lines
 
 

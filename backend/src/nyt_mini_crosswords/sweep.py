@@ -21,6 +21,13 @@ class SweepRecord:
     search_nodes: int
 
 
+@dataclass(frozen=True, slots=True)
+class ComparisonPair:
+    seed: int
+    baseline: SweepRecord
+    candidate: SweepRecord
+
+
 def sweep_seeds(
     seeds: Iterable[int],
     *,
@@ -86,6 +93,53 @@ def summarize(records: list[SweepRecord]) -> dict[str, object]:
             {"template_id": template_id, "successes": count}
             for template_id, count in top_templates
         ],
+    }
+
+
+def align_records(baseline: list[SweepRecord], candidate: list[SweepRecord]) -> list[ComparisonPair]:
+    baseline_by_seed = {record.seed: record for record in baseline}
+    candidate_by_seed = {record.seed: record for record in candidate}
+    shared_seeds = sorted(baseline_by_seed.keys() & candidate_by_seed.keys())
+    return [
+        ComparisonPair(seed=seed, baseline=baseline_by_seed[seed], candidate=candidate_by_seed[seed])
+        for seed in shared_seeds
+    ]
+
+
+def summarize_comparison(pairs: list[ComparisonPair]) -> dict[str, object]:
+    baseline_successes = [pair for pair in pairs if pair.baseline.status == "ok"]
+    candidate_successes = [pair for pair in pairs if pair.candidate.status == "ok"]
+    improved = [pair for pair in pairs if pair.baseline.status != "ok" and pair.candidate.status == "ok"]
+    regressed = [pair for pair in pairs if pair.baseline.status == "ok" and pair.candidate.status != "ok"]
+    shared_successes = [pair for pair in pairs if pair.baseline.status == "ok" and pair.candidate.status == "ok"]
+    shared_timeouts = [pair for pair in pairs if pair.baseline.status == "timeout" and pair.candidate.status == "timeout"]
+
+    elapsed_deltas = [pair.candidate.elapsed_ms - pair.baseline.elapsed_ms for pair in shared_successes]
+    node_deltas = [pair.candidate.search_nodes - pair.baseline.search_nodes for pair in shared_successes]
+
+    exact_matches = 0
+    for pair in shared_successes:
+        if pair.baseline.template_id == pair.candidate.template_id and pair.baseline.answer_count == pair.candidate.answer_count:
+            exact_matches += 1
+
+    return {
+        "seeds_compared": len(pairs),
+        "baseline_successes": len(baseline_successes),
+        "candidate_successes": len(candidate_successes),
+        "success_delta": len(candidate_successes) - len(baseline_successes),
+        "improved": len(improved),
+        "regressed": len(regressed),
+        "shared_successes": len(shared_successes),
+        "shared_timeouts": len(shared_timeouts),
+        "baseline_only_seeds": [pair.seed for pair in regressed][:25],
+        "candidate_only_seeds": [pair.seed for pair in improved][:25],
+        "elapsed_delta_mean_ms": mean(elapsed_deltas) if elapsed_deltas else None,
+        "elapsed_delta_median_ms": median(elapsed_deltas) if elapsed_deltas else None,
+        "search_node_delta_mean": mean(node_deltas) if node_deltas else None,
+        "search_node_delta_median": median(node_deltas) if node_deltas else None,
+        "faster_on_shared_successes": sum(1 for delta in elapsed_deltas if delta < 0),
+        "slower_on_shared_successes": sum(1 for delta in elapsed_deltas if delta > 0),
+        "exact_match_rate": (exact_matches / len(shared_successes)) if shared_successes else 0.0,
     }
 
 
