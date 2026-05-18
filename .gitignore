@@ -1,0 +1,13 @@
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+backend/.venv/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/__pycache__/
+backend/.ruff_cache/
+**/*.pyc
+**/__pycache__/
+.DS_Store
+*.log
