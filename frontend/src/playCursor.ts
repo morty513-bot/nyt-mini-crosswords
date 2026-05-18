@@ -18,9 +18,7 @@ export function resolveCursorAtCell(
   col: number,
   preferredDirection: PuzzleDirection,
 ): PlayCursor | null {
-  const slot =
-    getPuzzleSlotByCell(puzzle, row, col, preferredDirection) ??
-    getPuzzleSlotByCell(puzzle, row, col);
+  const slot = getPuzzleSlotByCell(puzzle, row, col, preferredDirection);
 
   if (!slot) {
     return null;
