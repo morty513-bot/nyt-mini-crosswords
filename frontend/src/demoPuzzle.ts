@@ -3,7 +3,7 @@ import { buildPuzzle } from './puzzle';
 export const DEMO_PUZZLE = buildPuzzle({
   id: 'demo-seed-48',
   title: 'Demo puzzle',
-  rows: ['#....', '#....', '.....', '.....', '...##'],
+  rows: ['#STEM', '#HAVE', 'MAKES', 'OPENS', 'MEN##'],
   slots: [
     { id: 'A1', direction: 'across', row: 0, col: 1, length: 4, answer: 'STEM', clue: 'Science-and-tech field' },
     { id: 'A2', direction: 'across', row: 1, col: 1, length: 4, answer: 'HAVE', clue: 'Possess' },
