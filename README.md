@@ -9,6 +9,8 @@ This repo is a small, reviewable MVP for generating 5x5 mini-style crosswords.
 - Deterministic runs via seed input.
 - Timeout responses as a first-class outcome.
 - Clue generation via the local OpenClaw CLI after a puzzle is solved.
+- A separate mobile-first play demo at `/nyt-mini-crosswords/play`.
+- A puzzle JSON export button on the generator page.
 
 ## Repo layout
 - `backend/`: FastAPI app, solver, template library, lexicon, tests.

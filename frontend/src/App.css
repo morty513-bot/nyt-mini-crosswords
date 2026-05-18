@@ -15,6 +15,51 @@ body {
   padding: 40px 20px 56px;
 }
 
+.play-shell {
+  max-width: 1180px;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.site-brand {
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.site-tabs {
+  display: inline-flex;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(29, 27, 23, 0.1);
+}
+
+.site-tab {
+  color: rgba(29, 27, 23, 0.8);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.site-tab-active {
+  background: #1d1b17;
+  color: #f6efe3;
+}
+
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
@@ -100,6 +145,33 @@ body {
   opacity: 0.75;
 }
 
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 16px;
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(29, 27, 23, 0.18);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.82);
+  color: inherit;
+  text-decoration: none;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  background: rgba(255, 255, 255, 0.94);
+}
+
 .result-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
@@ -125,6 +197,12 @@ body {
   margin: 0;
   font-size: 1.05rem;
   letter-spacing: -0.02em;
+}
+
+.panel-subtitle {
+  margin: 6px 0 0;
+  color: rgba(29, 27, 23, 0.72);
+  line-height: 1.4;
 }
 
 .status-chip {
@@ -281,6 +359,251 @@ body {
   font-size: 0.88rem;
 }
 
+.play-hero {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.play-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-content: start;
+  padding: 16px;
+}
+
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(29, 27, 23, 0.08);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.play-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.play-board-panel,
+.clue-panel {
+  padding: 16px;
+}
+
+.play-board-header {
+  align-items: start;
+}
+
+.play-mode-toggle {
+  display: inline-flex;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(29, 27, 23, 0.06);
+}
+
+.toggle-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: transparent;
+  color: rgba(29, 27, 23, 0.76);
+  font: inherit;
+  font-weight: 700;
+}
+
+.toggle-button-active {
+  background: #1d1b17;
+  color: #f6efe3;
+}
+
+.play-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  width: 100%;
+  margin-top: 16px;
+  aspect-ratio: 1;
+  touch-action: manipulation;
+}
+
+.play-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(29, 27, 23, 0.14);
+  background: #fbf8f1;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.play-cell-block {
+  background: #1d1b17;
+  border-color: #1d1b17;
+}
+
+.play-cell-active {
+  background: rgba(255, 221, 177, 0.28);
+}
+
+.play-cell-selected {
+  background: #fff4e7;
+  border-color: #b84b18;
+  box-shadow: inset 0 0 0 2px #b84b18;
+}
+
+.play-cell-number {
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  font-size: 0.64rem;
+  line-height: 1;
+  font-weight: 800;
+  color: rgba(29, 27, 23, 0.6);
+}
+
+.play-cell-letter {
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  font-size: clamp(1.05rem, 5vw, 1.6rem);
+  font-weight: 700;
+}
+
+.play-cell-letter-filled {
+  color: #1d1b17;
+}
+
+.play-capture {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.play-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.toolbar-button {
+  border: 1px solid rgba(29, 27, 23, 0.16);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.88);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+}
+
+.clue-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.clue-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(29, 27, 23, 0.06);
+}
+
+.clue-tab {
+  flex: 1 1 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 12px;
+  background: transparent;
+  color: rgba(29, 27, 23, 0.76);
+  font: inherit;
+  font-weight: 700;
+}
+
+.clue-tab-active {
+  background: #1d1b17;
+  color: #f6efe3;
+}
+
+.selected-clue {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(29, 27, 23, 0.1);
+}
+
+.selected-clue-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(184, 75, 24, 0.88);
+}
+
+.selected-clue-text {
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.clue-list {
+  display: grid;
+  gap: 10px;
+}
+
+.clue-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(29, 27, 23, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+  color: inherit;
+  text-align: left;
+}
+
+.clue-item-active {
+  border-color: rgba(184, 75, 24, 0.28);
+  background: rgba(255, 247, 241, 0.96);
+}
+
+.clue-item-number {
+  min-width: 1.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: rgba(184, 75, 24, 0.95);
+}
+
+.clue-item-body {
+  display: grid;
+  gap: 4px;
+}
+
+.clue-item-answer {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(29, 27, 23, 0.55);
+}
+
+.clue-item-clue {
+  line-height: 1.45;
+  font-weight: 600;
+}
+
 .error-panel {
   margin-bottom: 24px;
   border-color: rgba(155, 61, 17, 0.3);
@@ -334,5 +657,21 @@ body {
   .grid {
     width: 100%;
     max-width: 420px;
+  }
+
+  .site-nav {
+    align-items: flex-start;
+  }
+
+  .site-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 901px) {
+  .play-layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.9fr);
+    align-items: start;
   }
 }

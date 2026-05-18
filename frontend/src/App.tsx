@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { generatePuzzle } from './api';
+import PlayPage from './PlayPage';
+import SiteNav from './SiteNav';
+import { downloadPuzzleJson, puzzleFromGenerateResponse } from './puzzle';
 import type { GenerateResponse } from './types';
 import './App.css';
 
@@ -26,7 +29,7 @@ function formatStatValue(value: number) {
   return value.toLocaleString();
 }
 
-export default function App() {
+function GeneratorPage() {
   const [seed, setSeed] = useState(DEFAULT_REQUEST.seed);
   const [timeBudgetMs, setTimeBudgetMs] = useState(DEFAULT_REQUEST.time_budget_ms);
   const [candidateLimit, setCandidateLimit] = useState(DEFAULT_REQUEST.candidate_limit);
@@ -55,9 +58,12 @@ export default function App() {
   }
 
   const rows = result?.rows ?? [];
+  const generatedPuzzle = result ? puzzleFromGenerateResponse(result) : null;
 
   return (
     <main className="shell">
+      <SiteNav current="generate" />
+
       {error ? (
         <section className="panel error-panel error-banner" role="alert" aria-live="assertive">
           <div>
@@ -136,6 +142,21 @@ export default function App() {
               <span>{formatStatValue(result.stats.elapsed_ms)} ms</span>
             </div>
 
+            <div className="result-actions">
+              <a className="secondary-button" href="/nyt-mini-crosswords/play">
+                Open play demo
+              </a>
+              {generatedPuzzle ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => downloadPuzzleJson(generatedPuzzle)}
+                >
+                  Download puzzle JSON
+                </button>
+              ) : null}
+            </div>
+
             {rows.length > 0 ? (
               <div className="grid" aria-label="generated crossword grid">
                 {rows.flatMap((row, rowIndex) => renderCells(row, rowIndex))}
@@ -202,4 +223,9 @@ export default function App() {
       ) : null}
     </main>
   );
+}
+
+export default function App() {
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  return pathname.indexOf('/play') >= 0 ? <PlayPage /> : <GeneratorPage />;
 }
