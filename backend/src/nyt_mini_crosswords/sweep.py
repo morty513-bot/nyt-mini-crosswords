@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import asdict, dataclass
-from statistics import mean
+from statistics import mean, median
 from typing import Iterable
 
 from .app import GENERATOR
@@ -55,6 +55,14 @@ def summarize(records: list[SweepRecord]) -> dict[str, object]:
     timeouts = [record for record in records if record.status == "timeout"]
     failures = [record for record in records if record.status not in {"ok", "timeout"}]
     elapsed_success = [record.elapsed_ms for record in successes]
+    nodes_success = [record.search_nodes for record in successes]
+
+    template_success_counts: dict[str, int] = {}
+    for record in successes:
+        if record.template_id is None:
+            continue
+        template_success_counts[record.template_id] = template_success_counts.get(record.template_id, 0) + 1
+    top_templates = sorted(template_success_counts.items(), key=lambda item: (-item[1], item[0]))[:10]
 
     return {
         "seeds_run": len(records),
@@ -64,10 +72,17 @@ def summarize(records: list[SweepRecord]) -> dict[str, object]:
         "success_rate": (len(successes) / len(records)) if records else 0.0,
         "timeout_rate": (len(timeouts) / len(records)) if records else 0.0,
         "average_success_elapsed_ms": mean(elapsed_success) if elapsed_success else None,
+        "median_success_elapsed_ms": median(elapsed_success) if elapsed_success else None,
+        "average_success_search_nodes": mean(nodes_success) if nodes_success else None,
         "best_seed": min(successes, key=lambda record: record.elapsed_ms).seed if successes else None,
         "worst_seed": max(successes, key=lambda record: record.elapsed_ms).seed if successes else None,
         "timeout_seeds": [record.seed for record in timeouts[:25]],
         "failure_seeds": [record.seed for record in failures[:25]],
+        "unique_templates_used": len(template_success_counts),
+        "top_templates": [
+            {"template_id": template_id, "successes": count}
+            for template_id, count in top_templates
+        ],
     }
 
 
@@ -108,10 +123,19 @@ def main() -> None:
     print(f"Other failures: {summary['other_failures']}")
     if summary["average_success_elapsed_ms"] is not None:
         print(f"Average successful elapsed ms: {summary['average_success_elapsed_ms']:.1f}")
+    if summary["median_success_elapsed_ms"] is not None:
+        print(f"Median successful elapsed ms: {summary['median_success_elapsed_ms']:.1f}")
+    if summary["average_success_search_nodes"] is not None:
+        print(f"Average successful search nodes: {summary['average_success_search_nodes']:.1f}")
     if summary["best_seed"] is not None:
         print(f"Fastest success seed: {summary['best_seed']}")
     if summary["worst_seed"] is not None:
         print(f"Slowest success seed: {summary['worst_seed']}")
+    print(f"Unique templates used: {summary['unique_templates_used']}")
+    if summary["top_templates"]:
+        print("Top successful templates:")
+        for item in summary["top_templates"]:
+            print(f"  {item['template_id']}: {item['successes']} successes")
     if summary["timeout_seeds"]:
         print("Timeout seeds (first 25): " + ", ".join(str(seed) for seed in summary["timeout_seeds"]))
     if summary["failure_seeds"]:
