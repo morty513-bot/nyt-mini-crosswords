@@ -8,7 +8,7 @@ This repo is a small, reviewable MVP for generating 5x5 mini-style crosswords.
 - A template library instead of fully free-form black-square generation.
 - Deterministic runs via seed input.
 - Timeout responses as a first-class outcome.
-- Batched clue generation via the local OpenClaw CLI after a puzzle is solved, chunked into small batches to control token use.
+- Clue generation via the local OpenClaw CLI after a puzzle is solved.
 
 ## Repo layout
 - `backend/`: FastAPI app, solver, template library, lexicon, tests.
