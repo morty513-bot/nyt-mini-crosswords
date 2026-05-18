@@ -6,7 +6,9 @@ import {
   getCellNumberMap,
   getCellSolutionMap,
   getClueLists,
+  getFirstEmptyCellIndexInSlot,
   getNextEmptyPlayableCellIndex,
+  getNextSlotWithEmptyCell,
   getPuzzleSlotByCell,
   getSlotCells,
   isPuzzleComplete,
@@ -176,11 +178,26 @@ export default function PlayPage() {
     next[currentIndex] = letter;
     setEntries(next);
 
-    const nextActiveCell = getNextEmptyCellInList(activeCells, next, currentIndex);
-    if (typeof nextActiveCell === 'number') {
-      setSelectedCell(cellKeyFromIndex(nextActiveCell, puzzle.size));
-      focusCapture();
-      return;
+    if (activeSlot) {
+      const currentSlotFirstEmpty = getFirstEmptyCellIndexInSlot(activeSlot, next, puzzle.size);
+      if (currentSlotFirstEmpty === null) {
+        const nextSlot = getNextSlotWithEmptyCell(puzzle, selectedDirection, activeSlot, next);
+        const nextSlotCell = nextSlot ? getFirstEmptyCellIndexInSlot(nextSlot, next, puzzle.size) : null;
+        if (typeof nextSlotCell === 'number') {
+          setSelectedCell(cellKeyFromIndex(nextSlotCell, puzzle.size));
+          setSelectedDirection(nextSlot.direction);
+          setClueDirection(nextSlot.direction);
+          focusCapture();
+          return;
+        }
+      } else {
+        const nextActiveCell = getNextEmptyCellInList(activeCells, next, currentIndex);
+        if (typeof nextActiveCell === 'number') {
+          setSelectedCell(cellKeyFromIndex(nextActiveCell, puzzle.size));
+          focusCapture();
+          return;
+        }
+      }
     }
 
     const nextPlayable = getNextEmptyPlayableCellIndex(puzzle, next, currentIndex);
