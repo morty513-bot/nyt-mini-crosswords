@@ -7,7 +7,6 @@ import {
   getCellSolutionMap,
   getClueLists,
   getFirstEmptyCellIndexInSlot,
-  getNextEmptyPlayableCellIndex,
   getNextSlotWithEmptyCell,
   getPuzzleSlotByCell,
   getSlotCells,
@@ -195,12 +194,6 @@ export default function PlayPage() {
         focusCapture();
         return;
       }
-    }
-
-    const nextPlayable = getNextEmptyPlayableCellIndex(puzzle, next, currentIndex);
-    if (typeof nextPlayable === 'number') {
-      selectCell(Math.floor(nextPlayable / puzzle.size), nextPlayable % puzzle.size);
-      return;
     }
 
     focusCapture();
