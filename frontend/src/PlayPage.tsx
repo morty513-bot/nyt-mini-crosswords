@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import SiteNav from './SiteNav';
 import { DEMO_PUZZLE } from './demoPuzzle';
+import { advanceTypingCursor, resolveCursorAtCell } from './playCursor';
 import {
   downloadPuzzleJson,
   getCellNumberMap,
   getCellSolutionMap,
   getClueLists,
-  getFirstEmptyCellIndexInSlot,
-  getNextSlotWithEmptyCell,
   getPuzzleSlotByCell,
   getSlotCells,
   isPuzzleComplete,
@@ -89,15 +88,13 @@ export default function PlayPage() {
   }
 
   function selectCell(row: number, col: number) {
-    const preferred =
-      getPuzzleSlotByCell(puzzle, row, col, selectedDirection) ??
-      getPuzzleSlotByCell(puzzle, row, col);
-    if (!preferred) {
+    const cursor = resolveCursorAtCell(puzzle, row, col, selectedDirection);
+    if (!cursor) {
       return;
     }
     setSelectedCell(cellKey(row, col));
-    setSelectedDirection(preferred.direction);
-    setClueDirection(preferred.direction);
+    setSelectedDirection(cursor.direction);
+    setClueDirection(cursor.direction);
     focusCapture();
   }
 
@@ -175,23 +172,17 @@ export default function PlayPage() {
     next[currentIndex] = letter;
     setEntries(next);
 
-    if (activeSlot) {
-      const nextActiveCell = getNextEmptyCellInList(activeCells, next, currentIndex);
-      if (typeof nextActiveCell === 'number') {
-        setSelectedCell(cellKeyFromIndex(nextActiveCell, puzzle.size));
-        focusCapture();
-        return;
-      }
-
-      const nextSlot = getNextSlotWithEmptyCell(puzzle, selectedDirection, activeSlot, next);
-      const nextSlotCell = nextSlot ? getFirstEmptyCellIndexInSlot(nextSlot, next, puzzle.size) : null;
-      if (typeof nextSlotCell === 'number') {
-        setSelectedCell(cellKeyFromIndex(nextSlotCell, puzzle.size));
-        setSelectedDirection(nextSlot.direction);
-        setClueDirection(nextSlot.direction);
-        focusCapture();
-        return;
-      }
+    const nextCursor = advanceTypingCursor(puzzle, next, {
+      row: selected.row,
+      col: selected.col,
+      direction: selectedDirection,
+    });
+    if (nextCursor) {
+      setSelectedCell(cellKey(nextCursor.row, nextCursor.col));
+      setSelectedDirection(nextCursor.direction);
+      setClueDirection(nextCursor.direction);
+      focusCapture();
+      return;
     }
 
     focusCapture();
@@ -488,24 +479,4 @@ function cellKeyFromIndex(index: number, size: number) {
 
 function indexFor(row: number, col: number, size: number) {
   return row * size + col;
-}
-
-function getNextEmptyCellInList(cells: number[], entries: string[], currentIndex: number) {
-  if (!cells.length) {
-    return null;
-  }
-
-  const start = cells.indexOf(currentIndex);
-  if (start < 0) {
-    return null;
-  }
-
-  for (let index = start + 1; index < cells.length; index += 1) {
-    const cellIndex = cells[index];
-    if (!entries[cellIndex]?.trim()) {
-      return cellIndex;
-    }
-  }
-
-  return null;
 }

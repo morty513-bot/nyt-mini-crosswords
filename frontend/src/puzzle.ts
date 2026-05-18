@@ -156,56 +156,6 @@ export function getCellSolutionMap(puzzle: Puzzle): Map<string, string> {
   return map;
 }
 
-export function getPlayableCellIndexes(puzzle: Puzzle): number[] {
-  const playable: number[] = [];
-  for (let row = 0; row < puzzle.rows.length; row += 1) {
-    for (let col = 0; col < puzzle.rows[row].length; col += 1) {
-      if (puzzle.rows[row][col] !== '#') {
-        playable.push(cellIndex(row, col, puzzle.size));
-      }
-    }
-  }
-  return playable;
-}
-
-export function getFirstEmptyCellIndexInSlot(slot: PuzzleSlot, entries: string[], size: number): number | null {
-  for (const index of getSlotCells(slot, size)) {
-    if (!entries[index]?.trim()) {
-      return index;
-    }
-  }
-  return null;
-}
-
-export function getNextSlotWithEmptyCell(
-  puzzle: Puzzle,
-  direction: PuzzleDirection,
-  currentSlot: PuzzleSlot,
-  entries: string[],
-): PuzzleSlot | null {
-  const slots = puzzle.slots.filter((slot) => slot.direction === direction);
-  const currentIndex = slots.findIndex((slot) => slot.id === currentSlot.id);
-  if (currentIndex < 0) {
-    return null;
-  }
-
-  for (let index = currentIndex + 1; index < slots.length; index += 1) {
-    const slot = slots[index];
-    if (getFirstEmptyCellIndexInSlot(slot, entries, puzzle.size) !== null) {
-      return slot;
-    }
-  }
-
-  for (let index = 0; index < currentIndex; index += 1) {
-    const slot = slots[index];
-    if (getFirstEmptyCellIndexInSlot(slot, entries, puzzle.size) !== null) {
-      return slot;
-    }
-  }
-
-  return null;
-}
-
 export function isPuzzleComplete(puzzle: Puzzle, entries: string[]): boolean {
   const solutionMap = getCellSolutionMap(puzzle);
   for (const [key] of solutionMap.entries()) {
