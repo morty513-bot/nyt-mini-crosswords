@@ -42,17 +42,19 @@ def test_generation_reports_timeout_for_tiny_budget() -> None:
 
 def test_timeout_message_includes_reason_and_stats() -> None:
     message = _timeout_message(
-        "search node limit of 10 reached while solving template demo",
+        "the per-template node slice of 10 was exhausted",
         _Stats(templates_tried=2, search_nodes=10, backtracks=3, dead_ends=1, candidate_checks=4),
         1000,
+        10,
     )
-    assert message.startswith("Timed out because search node limit of 10 reached while solving template demo.")
-    assert "templates tried: 2" in message
+    assert message.startswith("Timed out because the per-template node slice of 10 was exhausted.")
+    assert "attempts tried: 2" in message
     assert "search nodes: 10" in message
     assert "backtracks: 3" in message
     assert "dead ends: 1" in message
     assert "candidate checks: 4" in message
     assert "budget: 1000 ms" in message
+    assert "per-template node slice: 10" in message
 
 
 def test_generation_succeeds_for_known_seed() -> None:

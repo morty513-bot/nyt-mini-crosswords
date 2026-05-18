@@ -257,6 +257,11 @@ body {
   letter-spacing: 0.04em;
 }
 
+.answer-clue {
+  color: rgba(29, 27, 23, 0.84);
+  line-height: 1.4;
+}
+
 .answer-meta {
   color: rgba(29, 27, 23, 0.68);
   font-size: 0.88rem;

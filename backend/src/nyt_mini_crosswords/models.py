@@ -21,6 +21,7 @@ class SlotAnswer(BaseModel):
     col: int
     length: int
     word: str
+    clue: str | None = None
 
 
 class TemplateInfo(BaseModel):
@@ -46,6 +47,7 @@ class GenerateResponse(BaseModel):
     answers: list[SlotAnswer] = Field(default_factory=list)
     stats: GenerationStats
     message: str | None = None
+    clue_message: str | None = None
 
 
 class HealthResponse(BaseModel):

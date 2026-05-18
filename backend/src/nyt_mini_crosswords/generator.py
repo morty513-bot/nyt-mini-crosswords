@@ -92,7 +92,7 @@ class CrosswordGenerator:
             last_state,
             stats,
             elapsed_ms,
-            message=_timeout_message(last_timeout_reason, stats, time_budget_ms),
+            message=_timeout_message(last_timeout_reason, stats, time_budget_ms, template_node_slice),
         )
 
     def _success_response(self, seed: int, state: SolverState, stats: "_Stats", elapsed_ms: int) -> GenerateResponse:
@@ -163,11 +163,11 @@ class CrosswordGenerator:
     ) -> bool:
         if time.perf_counter() > deadline:
             raise GenerationTimeout(
-                f"time budget exhausted while solving template {state.template.template_id}",
+                "the time budget was exhausted",
             )
         if stats.search_nodes >= max_search_nodes:
             raise GenerationTimeout(
-                f"search node limit of {max_search_nodes} reached while solving template {state.template.template_id}",
+                f"the per-template node slice of {max_search_nodes} was exhausted",
             )
         if len(state.assignments) == len(state.slots):
             return True
@@ -184,10 +184,10 @@ class CrosswordGenerator:
             if time.perf_counter() > deadline or stats.search_nodes >= max_search_nodes:
                 if stats.search_nodes >= max_search_nodes:
                     raise GenerationTimeout(
-                        f"search node limit of {max_search_nodes} reached while solving template {state.template.template_id}",
+                        f"the per-template node slice of {max_search_nodes} was exhausted",
                     )
                 raise GenerationTimeout(
-                    f"time budget exhausted while solving template {state.template.template_id}",
+                    "the time budget was exhausted",
                 )
             if entry.word in state.used_words:
                 continue
@@ -294,14 +294,15 @@ def _template_priority(block_count: int) -> int:
     return 5
 
 
-def _timeout_message(reason: str, stats: "_Stats", time_budget_ms: int) -> str:
+def _timeout_message(reason: str, stats: "_Stats", time_budget_ms: int, per_template_node_slice: int) -> str:
     details = [
         f"Timed out because {reason}.",
-        f"templates tried: {stats.templates_tried}",
+        f"attempts tried: {stats.templates_tried}",
         f"search nodes: {stats.search_nodes}",
         f"backtracks: {stats.backtracks}",
         f"dead ends: {stats.dead_ends}",
         f"candidate checks: {stats.candidate_checks}",
         f"budget: {time_budget_ms} ms",
+        f"per-template node slice: {per_template_node_slice}",
     ]
     return " ".join(details[:1]) + " " + "; ".join(details[1:])

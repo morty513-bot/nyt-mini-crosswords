@@ -12,6 +12,7 @@ export type SlotAnswer = {
   col: number;
   length: number;
   word: string;
+  clue: string | null;
 };
 
 export type TemplateInfo = {
@@ -37,4 +38,5 @@ export type GenerateResponse = {
   answers: SlotAnswer[];
   stats: GenerationStats;
   message: string | null;
+  clue_message: string | null;
 };

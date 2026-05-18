@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 
+from .clues import annotate_answers_with_clues
 from .generator import CrosswordGenerator, GenerationOptions
 from .lexicon import Lexicon
 from .models import GenerateRequest, GenerateResponse, HealthResponse
@@ -35,7 +36,7 @@ def generate(request: GenerateRequest) -> GenerateResponse:
     seed = _seed_value(request.seed)
     if not TEMPLATES:
         raise HTTPException(status_code=500, detail="No crossword templates are available.")
-    return GENERATOR.generate(
+    outcome = GENERATOR.generate(
         seed=seed,
         time_budget_ms=request.time_budget_ms,
         candidate_limit=request.candidate_limit,
@@ -43,6 +44,11 @@ def generate(request: GenerateRequest) -> GenerateResponse:
         template_id=request.template_id,
         options=GenerationOptions(candidate_cache=request.candidate_cache),
     )
+    if outcome.status == "ok":
+        answers, clue_message = annotate_answers_with_clues(outcome.answers)
+        outcome.answers = answers
+        outcome.clue_message = clue_message
+    return outcome
 
 
 def _seed_value(value: int | str | None) -> int:

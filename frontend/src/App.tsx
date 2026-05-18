@@ -185,12 +185,16 @@ export default function App() {
                 {result.answers.map((answer) => (
                   <li key={answer.slot_id}>
                     <span className="answer-word">{answer.word}</span>
+                    <span className="answer-clue">
+                      {answer.clue ?? 'Clue unavailable'}
+                    </span>
                     <span className="answer-meta">
                       {answer.slot_id} · {answer.direction} · {answer.length}
                     </span>
                   </li>
                 ))}
               </ol>
+              {result.clue_message ? <p className="note">{result.clue_message}</p> : null}
             </article>
           ) : null}
         </section>
