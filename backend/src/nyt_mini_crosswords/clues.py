@@ -13,6 +13,8 @@ from .models import SlotAnswer
 LOGGER = logging.getLogger(__name__)
 DEFAULT_OPENCLAW_TIMEOUT_SECONDS = 30
 DEFAULT_SUBPROCESS_TIMEOUT_SECONDS = DEFAULT_OPENCLAW_TIMEOUT_SECONDS + 15
+CLUE_CHUNK_SIZE = max(1, int(os.environ.get("OPENCLAW_CLUE_CHUNK_SIZE", "4")))
+CLUE_THINKING = os.environ.get("OPENCLAW_CLUE_THINKING", "minimal")
 
 
 def annotate_answers_with_clues(answers: Sequence[SlotAnswer]) -> tuple[list[SlotAnswer], str | None]:
@@ -21,22 +23,29 @@ def annotate_answers_with_clues(answers: Sequence[SlotAnswer]) -> tuple[list[Slo
     if _should_skip_clues():
         return [answer.model_copy() for answer in answers], None
 
-    try:
-        clue_map = _generate_clue_map(answers)
-    except Exception as exc:  # pragma: no cover - defensive logging path
-        LOGGER.warning('Clue generation failed: %s', exc)
-        return [answer.model_copy() for answer in answers], f'Clue generation failed: {exc}'
-
     updated: list[SlotAnswer] = []
-    missing: list[str] = []
-    for answer in answers:
-        clue = clue_map.get(answer.slot_id)
-        if clue is None:
-            missing.append(answer.slot_id)
-        updated.append(answer.model_copy(update={'clue': clue}))
+    messages: list[str] = []
+    for chunk in _chunk_answers(answers):
+        try:
+            clue_map = _generate_clue_map(chunk)
+        except Exception as exc:  # pragma: no cover - defensive logging path
+            LOGGER.warning('Clue generation failed for batch of %s: %s', len(chunk), exc)
+            messages.append(f'clue batch of {len(chunk)} failed: {exc}')
+            updated.extend(answer.model_copy(update={'clue': None}) for answer in chunk)
+            continue
 
-    if missing:
-        return updated, f'Clues were not generated for {len(missing)} slot(s).'
+        missing = []
+        for answer in chunk:
+            clue = clue_map.get(answer.slot_id)
+            if clue is None:
+                missing.append(answer.slot_id)
+            updated.append(answer.model_copy(update={'clue': clue}))
+
+        if missing:
+            messages.append(f'clues were not generated for {len(missing)} slot(s) in a batch')
+
+    if messages:
+        return updated, 'Clue generation incomplete: ' + '; '.join(messages)
     return updated, None
 
 
@@ -58,7 +67,7 @@ def _generate_clue_map(answers: Sequence[SlotAnswer]) -> dict[str, str]:
             prompt,
             '--json',
             '--thinking',
-            'minimal',
+            CLUE_THINKING,
             '--timeout',
             str(DEFAULT_OPENCLAW_TIMEOUT_SECONDS),
         ],
@@ -141,6 +150,10 @@ def _extract_assistant_text(wrapper: object) -> str:
             if isinstance(text, str) and text.strip():
                 return text
     raise RuntimeError('openclaw response did not include assistant text')
+
+
+def _chunk_answers(answers: Sequence[SlotAnswer]) -> list[list[SlotAnswer]]:
+    return [list(answers[index : index + CLUE_CHUNK_SIZE]) for index in range(0, len(answers), CLUE_CHUNK_SIZE)]
 
 
 def _resolve_openclaw_command() -> str:

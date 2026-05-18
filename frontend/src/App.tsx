@@ -186,7 +186,8 @@ export default function App() {
                   <li key={answer.slot_id}>
                     <span className="answer-word">{answer.word}</span>
                     <span className="answer-clue">
-                      {answer.clue ?? 'Clue unavailable'}
+                      <span className="answer-clue-label">Clue</span>
+                      <span className="answer-clue-text">{answer.clue ?? 'Clue unavailable'}</span>
                     </span>
                     <span className="answer-meta">
                       {answer.slot_id} · {answer.direction} · {answer.length}
